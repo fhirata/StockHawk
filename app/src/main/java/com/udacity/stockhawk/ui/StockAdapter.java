@@ -3,6 +3,7 @@ package com.udacity.stockhawk.ui;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.support.annotation.IntDef;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +14,8 @@ import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.data.PrefUtils;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -20,7 +23,7 @@ import java.util.Locale;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHolder> {
+public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHolder> {
 
     private final Context context;
     private final DecimalFormat dollarFormatWithPlus;
@@ -28,6 +31,14 @@ class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHolder> {
     private final DecimalFormat percentageFormat;
     private Cursor cursor;
     private StockAdapterOnClickHandler clickHandler;
+
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({SYMBOL_UPDATE_OK, SYMBOL_UPDATE_SERVER_DOWN, SYMBOL_UPDATE_SERVER_INVALID, SYMBOL_UPDATE_UNKNOWN})
+    public @interface SymbolUpdateStatus {}
+    public static final int SYMBOL_UPDATE_OK = 0;
+    public static final int SYMBOL_UPDATE_SERVER_DOWN = 1;
+    public static final int SYMBOL_UPDATE_SERVER_INVALID = 2;
+    public static final int SYMBOL_UPDATE_UNKNOWN = 3;
 
     StockAdapter(Context context, StockAdapterOnClickHandler clickHandler) {
         this.context = context;
