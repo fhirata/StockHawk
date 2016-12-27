@@ -16,7 +16,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,6 +31,10 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import timber.log.Timber;
 
+import static com.udacity.stockhawk.ui.StockAdapter.SYMBOL_UPDATE_OK;
+import static com.udacity.stockhawk.ui.StockAdapter.SYMBOL_UPDATE_UNKNOWN;
+import static com.udacity.stockhawk.ui.StockDetailActivity.QUOTE_URI;
+
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>,
         SwipeRefreshLayout.OnRefreshListener,
         StockAdapter.StockAdapterOnClickHandler,
@@ -46,6 +49,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @BindView(R.id.error)
     TextView error;
     private StockAdapter adapter;
+
+    private String mInvalidSymbol;
 
     @Override
     public void onClick(String symbol) {
@@ -118,7 +123,19 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     public void button(View view) {
-        new AddStockDialog().show(getFragmentManager(), "StockDialogFragment");
+        AddStockDialog dialog = new AddStockDialog();
+        if (mInvalidSymbol != null && !mInvalidSymbol.isEmpty()) {
+            Bundle arguments = new Bundle();
+            arguments.putParcelable(QUOTE_URI, Contract.Quote.makeUriForStock(mInvalidSymbol));
+            dialog.setArguments(arguments);
+        }
+        dialog.show(getFragmentManager(), "StockDialogFragment");
+    }
+
+    void checkStockSymbol(String symbol) {
+        // Fire the validation for the symbol.  We should get an update
+        // on the SharedPreferences listener and we will update the list if successful
+        QuoteSyncJob.syncImmediately(this, symbol);
     }
 
     void addStock(String symbol) {
@@ -132,7 +149,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             }
 
             PrefUtils.addStock(this, symbol);
-            QuoteSyncJob.syncImmediately(this);
         }
     }
 
@@ -207,7 +223,20 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        Log.i(LOG, "here: " + s);
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals(getString(R.string.pref_symbol_update_status))) {
+
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            @StockAdapter.SymbolUpdateStatus int status = prefs.getInt(getString(R.string.pref_symbol_update_status), SYMBOL_UPDATE_UNKNOWN);
+            String symbol = prefs.getString(getString(R.string.pref_symbol_to_add), "");
+            if (status == SYMBOL_UPDATE_OK) {
+                addStock(symbol);
+                mInvalidSymbol = "";
+                onRefresh();
+            } else if (status == SYMBOL_UPDATE_UNKNOWN && !symbol.isEmpty()) {
+                Toast.makeText(this, "Invalid symbol " + symbol, Toast.LENGTH_LONG).show();
+                mInvalidSymbol = symbol;
+            }
+        }
     }
 }

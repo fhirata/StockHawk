@@ -6,11 +6,16 @@ import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
 
+import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.data.PrefUtils;
+import com.udacity.stockhawk.ui.StockAdapter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,6 +33,9 @@ import yahoofinance.histquotes.HistoricalQuote;
 import yahoofinance.histquotes.Interval;
 import yahoofinance.quotes.stock.StockQuote;
 
+import static com.udacity.stockhawk.ui.StockAdapter.SYMBOL_UPDATE_UNKNOWN;
+import static com.udacity.stockhawk.ui.StockDetailActivity.QUOTE_URI;
+
 public final class QuoteSyncJob {
 
     private static final int ONE_OFF_ID = 2;
@@ -38,6 +46,44 @@ public final class QuoteSyncJob {
     private static final int YEARS_OF_HISTORY = 2;
 
     private QuoteSyncJob() {
+    }
+
+    static boolean isValidQuote(Context context, String symbol) {
+        Timber.d("Running sync job for " + symbol);
+        try {
+            Stock stock = YahooFinance.get(symbol);
+
+            if (null == stock) {
+                handleSymbolUpdate(context, symbol, SYMBOL_UPDATE_UNKNOWN);
+                return false;
+            } else {
+                StockQuote quote = stock.getQuote();
+                if (null == quote.getPrice()) {
+                    handleSymbolUpdate(context, symbol, SYMBOL_UPDATE_UNKNOWN);
+                    return false;
+                }
+            }
+        } catch (IOException exception) {
+            Timber.e(exception, "Error fetching stock quotes");
+        }
+
+        handleSymbolUpdate(context, symbol, StockAdapter.SYMBOL_UPDATE_OK);
+        return true;
+    }
+
+    private static void handleSymbolUpdate(Context context, String symbol, @StockAdapter.SymbolUpdateStatus int status) {
+        Timber.d("Invalid stock symbol.");
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        // first remove key to trigger change listener appropriately (hack?).
+        editor.remove(context.getString(R.string.pref_symbol_update_status));
+        editor.remove(context.getString(R.string.pref_symbol_to_add));
+        editor.apply();
+
+        editor.putString(context.getString(R.string.pref_symbol_to_add), symbol);
+        editor.putInt(context.getString(R.string.pref_symbol_update_status), status);
+        editor.apply();
     }
 
     static void getQuotes(Context context) {
@@ -75,6 +121,19 @@ public final class QuoteSyncJob {
                 Stock stock = quotes.get(symbol);
                 StockQuote quote = stock.getQuote();
 
+                if (null == quote.getPrice()) {
+                    if (quote.getPrice() == null) {
+                        Timber.d("Invalid stock symbol.");
+                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.remove(context.getString(R.string.pref_symbol_update_status));
+                        editor.apply();
+                        editor.putString(context.getString(R.string.pref_symbol_to_add), symbol)
+                                .putInt(context.getString(R.string.pref_symbol_update_status), SYMBOL_UPDATE_UNKNOWN)
+                                .commit();
+                        continue;
+                    }
+                }
                 float price = quote.getPrice().floatValue();
                 float change = quote.getChange().floatValue();
                 float percentChange = quote.getChangeInPercent().floatValue();
@@ -141,6 +200,34 @@ public final class QuoteSyncJob {
         schedulePeriodic(context);
         syncImmediately(context);
 
+    }
+
+    public static synchronized void syncImmediately(Context context, String symbol) {
+
+        ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+        if (networkInfo != null && networkInfo.isConnectedOrConnecting()) {
+            Intent nowIntent = new Intent(context, QuoteIntentService.class);
+            Bundle arguments = new Bundle();
+            arguments.putParcelable(QUOTE_URI, Contract.Quote.makeUriForStock(symbol));
+            nowIntent.putExtra(QUOTE_URI, arguments);
+            context.startService(nowIntent);
+        } else {
+
+            JobInfo.Builder builder = new JobInfo.Builder(ONE_OFF_ID, new ComponentName(context, QuoteJobService.class));
+
+
+            builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                    .setBackoffCriteria(INITIAL_BACKOFF, JobInfo.BACKOFF_POLICY_EXPONENTIAL);
+
+
+            JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+
+            scheduler.schedule(builder.build());
+
+
+        }
     }
 
     public static synchronized void syncImmediately(Context context) {

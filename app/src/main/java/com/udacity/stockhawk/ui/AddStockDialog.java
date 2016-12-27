@@ -5,19 +5,25 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import com.udacity.stockhawk.R;
+import com.udacity.stockhawk.data.Contract;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+
+import static com.udacity.stockhawk.ui.StockDetailActivity.QUOTE_URI;
 
 
 public class AddStockDialog extends DialogFragment {
@@ -44,6 +50,7 @@ public class AddStockDialog extends DialogFragment {
         });
         builder.setView(custom);
 
+
         builder.setMessage(getString(R.string.dialog_title));
         builder.setPositiveButton(getString(R.string.dialog_add),
                 new DialogInterface.OnClickListener() {
@@ -66,10 +73,22 @@ public class AddStockDialog extends DialogFragment {
     private void addStock() {
         Activity parent = getActivity();
         if (parent instanceof MainActivity) {
-            ((MainActivity) parent).addStock(stock.getText().toString());
+            ((MainActivity) parent).checkStockSymbol(stock.getText().toString());
         }
         dismissAllowingStateLoss();
     }
 
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = super.onCreateView(inflater, container, savedInstanceState);
 
+        Bundle arguments = getArguments();
+        if (null != arguments) {
+            Uri uri = arguments.getParcelable(QUOTE_URI);
+            stock.setText(Contract.Quote.getStockFromUri(uri));
+        }
+
+        return view;
+    }
 }
