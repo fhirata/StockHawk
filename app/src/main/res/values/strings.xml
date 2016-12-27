@@ -34,4 +34,6 @@
 
     <string name="pref_symbol_update_status">pref_symbol_update_status</string>
     <string name="pref_symbol_to_add">pref_symbol_to_add</string>
+
+    <string name="widget_stock_unavailable" translatable="true">Stock Quotes Unavailable.</string>
 </resources>
