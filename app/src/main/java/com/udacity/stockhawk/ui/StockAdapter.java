@@ -77,9 +77,11 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
 
         cursor.moveToPosition(position);
 
-        holder.symbol.setText(cursor.getString(Contract.Quote.POSITION_SYMBOL));
+        String symbol = cursor.getString(Contract.Quote.POSITION_SYMBOL);
+        holder.symbol.setText(symbol);
         holder.price.setText(dollarFormat.format(cursor.getFloat(Contract.Quote.POSITION_PRICE)));
 
+        holder.symbol.setContentDescription(context.getString(R.string.symbol_tap_to_open_graph, symbol));
 
         float rawAbsoluteChange = cursor.getFloat(Contract.Quote.POSITION_ABSOLUTE_CHANGE);
         float percentageChange = cursor.getFloat(Contract.Quote.POSITION_PERCENTAGE_CHANGE);
@@ -140,7 +142,6 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
             cursor.moveToPosition(adapterPosition);
             int symbolColumn = cursor.getColumnIndex(Contract.Quote.COLUMN_SYMBOL);
             clickHandler.onClick(cursor.getString(symbolColumn));
-
         }
 
 

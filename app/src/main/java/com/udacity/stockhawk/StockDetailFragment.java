@@ -75,7 +75,7 @@ public class StockDetailFragment extends android.support.v4.app.Fragment impleme
             StockData stockData = StockData.fromCursor(data);
 
             if (null != stockData) {
-                mLineChart.setData(StockData.getDataForListChart(stockData.getHistoricalQuote()));
+                mLineChart.setData(StockData.getDataForListChart(mContext, stockData.getHistoricalQuote()));
                 XAxis xAxis = mLineChart.getXAxis();
 
                 xAxis.setValueFormatter(new XAxisValueFormatter(stockData.getXAxisLabelList()));

@@ -87,6 +87,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
                 String symbol = adapter.getSymbolAtPosition(viewHolder.getAdapterPosition());
+                viewHolder.itemView.setContentDescription(getString(R.string.item_deleted, symbol));
                 PrefUtils.removeStock(MainActivity.this, symbol);
                 getContentResolver().delete(Contract.Quote.makeUriForStock(symbol), null, null);
             }
@@ -233,8 +234,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 addStock(symbol);
                 mInvalidSymbol = "";
                 onRefresh();
+                Toast.makeText(this, getString(R.string.symbol_added, symbol), Toast.LENGTH_SHORT).show();
             } else if (status == SYMBOL_UPDATE_UNKNOWN && !symbol.isEmpty()) {
-                Toast.makeText(this, "Invalid symbol " + symbol, Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.invalid_symbol, symbol), Toast.LENGTH_LONG).show();
                 mInvalidSymbol = symbol;
             }
         }

@@ -1,5 +1,6 @@
 package com.udacity.stockhawk.data;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.support.v4.util.Pair;
 import android.text.TextUtils;
@@ -7,6 +8,7 @@ import android.text.TextUtils;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.udacity.stockhawk.R;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -100,14 +102,14 @@ public class StockData {
         return stockData;
     }
 
-    public static LineData getDataForListChart(List<Pair<Long, BigDecimal>> historicalQuoteList) {
+    public static LineData getDataForListChart(Context context, List<Pair<Long, BigDecimal>> historicalQuoteList) {
 
         List<Entry> entries = new ArrayList<>();
         for (Pair<Long, BigDecimal> pair : historicalQuoteList) {
             entries.add(new Entry(pair.first, pair.second.floatValue()));
         }
 
-        LineDataSet dataSet = new LineDataSet(entries, "Historical Data");
+        LineDataSet dataSet = new LineDataSet(entries, context.getString(R.string.historical_data));
 
         LineData lineData = new LineData(dataSet);
         return lineData;
