@@ -1,4 +1,4 @@
-package com.udacity.stockhawk;
+package com.udacity.stockhawk.ui;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
+import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.StockData;
 import com.udacity.stockhawk.data.XAxisValueFormatter;
 
