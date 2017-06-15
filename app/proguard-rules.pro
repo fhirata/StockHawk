@@ -17,7 +17,7 @@
 #}
 
 
--assumenosideeffects class java.util.logging.Logger {
+    -assumenosideeffects class java.util.logging.Logger {
     public *** log(...);
 }
 

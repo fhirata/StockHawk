@@ -9,7 +9,6 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import com.udacity.stockhawk.R;
-import com.udacity.stockhawk.StockDetailFragment;
 import com.udacity.stockhawk.data.Contract;
 
 /**
