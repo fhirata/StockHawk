@@ -174,6 +174,10 @@ public final class QuoteSyncJob {
 
         } catch (IOException exception) {
             Timber.e(exception, "Error fetching stock quotes");
+            //TODO: save to preferences symbol status that fetch returned an error and provide user feedback
+       } catch (IndexOutOfBoundsException exception) {
+            Timber.e(exception, "Error fetching stock quotes: are you behind a proxy?");
+            //TODO: save to preferences symbol status that fetch returned an error and provide user feedback
         }
     }
 
